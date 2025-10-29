@@ -17,8 +17,7 @@ void setup() {
   stepper.setAcceleration(500);
 
   // --- Calculate steps for 45 degrees ---
-  // 1.8° per step = 200 steps/rev = 360°
-  // 45° = (200 * 45 / 360) = 25 steps
+  // 45° = (45 * 1.8°) = 25 steps
   long stepsFor45deg = 25;
 
   // Move to 45 degrees (25 full steps)
