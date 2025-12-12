@@ -63,11 +63,11 @@ struct Motor {
 };
 
 // Base: 0..360 deg
-Motor motorA = { STP_A, DIR_A, 0, false, 0, STEP_INTERVAL_US_A, 0.0f, 0.0f, 360.0f };
+Motor motorA = { STP_A, DIR_A, 0, false, 0, STEP_INTERVAL_US_A, 0.0f, -180.0f, 180.0f };
 // Joint1: 0..120 deg
-Motor motorB = { STP_B, DIR_B, 0, false, 0,  STEP_INTERVAL_US_B, 0.0f, 0.0f, 120.0f };
+Motor motorB = { STP_B, DIR_B, 0, false, 0,  STEP_INTERVAL_US_B, 0.0f, -12000.0f, 0.0f };
 // Joint2: 0..120 deg
-Motor motorC = { STP_C, DIR_C, 0, false, 0, STEP_INTERVAL_US_C, 0.0f, 0.0f, 120.0f };
+Motor motorC = { STP_C, DIR_C, 0, false, 0, STEP_INTERVAL_US_C, 0.0f, -1200.0f, 500.0f };
 
 // =====================
 // Servo state
@@ -160,6 +160,47 @@ void updateServo(int dir) {
   }
 }
 
+void handleSerialInput() {
+  while (Serial.available()) {
+    char c = Serial.read();
+
+    // End of command line
+    if (c == '\n' || c == '\r') {
+      serialBuffer[serialIndex] = '\0';
+
+      if (serialIndex > 0) {
+        unsigned long newInterval1, newInterval2, newInterval3;
+        // int count = sscanf(serialBuffer, "%lu %lu", &newInterval1, &newInterval2, &newInterval3);
+        int count = sscanf(serialBuffer, "%lu %lu", &newInterval1);
+
+        if (count == 1) {
+          motorB.intervalUs = newInterval1;
+
+          Serial.print("Updated speed: ");
+          Serial.println(motorB.intervalUs);
+        }
+        else if (count == 3) {
+          motorA.intervalUs = newInterval1;
+          motorB.intervalUs = newInterval2;
+          motorC.intervalUs = newInterval3;
+
+          Serial.println("Updated speed");
+        } else {
+          Serial.println("Invalid format. Use: <interval> <pulse>");
+        }
+      }
+
+      serialIndex = 0;  // reset buffer
+    }
+
+    // Store characters
+    else if (serialIndex < (int)sizeof(serialBuffer) - 1) {
+      serialBuffer[serialIndex++] = c;
+    }
+  }
+}
+
+
 // =====================
 // Setup / Loop
 // =====================
@@ -187,6 +228,7 @@ void setup() {
 }
 
 void loop() {
+  handleSerialInput();
 
   // Read joystick directions
   motorA.dir = joystickToDir(analogRead(JOY_A_PIN)); // Base
@@ -201,4 +243,8 @@ void loop() {
 
   // Update gripper servo
   updateServo(servoDir);
+  
+  // Serial.print("Initial Base angle: ");  Serial.println(motorA.angleDeg);
+  // Serial.print("Initial Joint1 angle: ");Serial.println(motorB.angleDeg);
+  // Serial.print("Initial Joint2 angle: ");Serial.println(motorC.angleDeg);
 }
