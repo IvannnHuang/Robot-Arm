@@ -32,7 +32,7 @@ const int JOY_D_PIN = 25;
 // Stepper interval time
 unsigned long STEP_INTERVAL_US_A = 80000;  // safe default
 unsigned long STEP_INTERVAL_US_B = 4000;  // safe default
-unsigned long STEP_INTERVAL_US_C = 20000;  // safe default
+unsigned long STEP_INTERVAL_US_C = 40000;  // safe default
 
 // Global pulse width (HIGH time)
 unsigned long STEP_PULSE_US = 5;  // safe default
