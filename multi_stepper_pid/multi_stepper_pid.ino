@@ -28,8 +28,8 @@ struct Motor {
 };
 
 Motor motorA = { STP_A, DIR_A, 0, false, 0, 50000, 0 };
-Motor motorB = { STP_B, DIR_B, 0, false, 0, 4000, 0 };
-Motor motorC = { STP_C, DIR_C, 0, false, 0, 20000, 0 };
+Motor motorB = { STP_B, DIR_B, 0, false, 0, 3000, 0 };
+Motor motorC = { STP_C, DIR_C, 0, false, 0, 60000, 0 };
 
 // =====================
 // Servo
@@ -44,9 +44,9 @@ unsigned long lastServoUpdate = 0;
 // =====================
 // PID / P / PD gains
 // =====================
-float Kp_A = 0.5;  // Base P
+float Kp_A = 1;  // Base P
 float Kp_B = 8, Ki_B = 8, Kd_B = 8;
-float Kp_C = 2, Ki_C = 0.2, Kd_C = 0.1;
+float Kp_C = 2, Ki_C = 0, Kd_C = 0.0;
 
 // =====================
 // IMU + Encoder
@@ -189,6 +189,15 @@ void updateMotorBPID(Motor &m, float currentAngle, float targetAngle, float Kp, 
     static float lastError = 0;
     float error = angleDiff(targetAngle,currentAngle);
 
+    // Deadzone threshold (in degrees)
+    const float DEADZONE = 2.0;  
+
+    if(fabs(error) <= DEADZONE){
+        m.dir = 0;             
+        m.integralError = 0;   
+        return;                
+    }
+
     // Reset integral if sign changes
     if(error*lastError < 0) m.integralError = 0;
     m.integralError += error*dt;
@@ -201,13 +210,16 @@ void updateMotorBPID(Motor &m, float currentAngle, float targetAngle, float Kp, 
     float u = Kp*error + Ki*m.integralError + Kd*(-filteredGyroB);
     if(u>1) m.dir=1; else if(u<-1) m.dir=-1; else m.dir=0;
 
-    unsigned long minInterval=4000;
+    unsigned long minInterval=3000;
     unsigned long interval = (unsigned long)(fabs(1.0/(fabs(u)+0.001)*1000000));
     if(interval<minInterval) interval=minInterval;
+    m.intervalUs = interval;
+
     updateMotor(m);
 
     lastError = error;
 }
+
 
 void updateMotorCPID(Motor &m, float currentAngle, float targetAngle, float Kp, float Ki, float Kd, float gyroRate){
     static float lastError = 0;
@@ -224,7 +236,7 @@ void updateMotorCPID(Motor &m, float currentAngle, float targetAngle, float Kp, 
     float u = Kp*error + Ki*m.integralError + Kd*(-filteredGyroC);
     if(u>1) m.dir=-1; else if(u<-1) m.dir=1; else m.dir=0;
 
-    unsigned long minInterval=15000;
+    unsigned long minInterval=60000;
     unsigned long interval = (unsigned long)(fabs(1.0/(fabs(u)+0.001)*1000000));
     if(interval<minInterval) interval=minInterval;
     m.intervalUs = interval;
@@ -282,10 +294,10 @@ void loop(){
   float angleEnc = normalize360(enc.rawAngle()*AS5600_RAW_TO_DEGREES + 95);
 
   float targetA = 180;
-  float targetB = 210;
+  float targetB = 230;
   float targetC = 90;
 
-  //updateBaseP(motorA, angleEnc, targetA, Kp_A);   
+  updateBaseP(motorA, angleEnc, targetA, Kp_A);   
   updateMotorBPID(motorB, pitch2, targetB, Kp_B, Ki_B, Kd_B, gyro2); 
   updateMotorCPID(motorC, pitch1, targetC, Kp_C, Ki_C, Kd_C, gyro1);
 
