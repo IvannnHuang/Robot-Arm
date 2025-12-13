@@ -73,12 +73,12 @@ Motor motorC = { STP_C, DIR_C, 0, false, 0, STEP_INTERVAL_US_C, 0.0f, -1200.0f, 
 // Servo state
 // =====================
 Servo gripServo;
-int   servoAngle = 90;
-int   lastPrintedServoAngle = 90;
+int   servoAngle = 180;
+int   lastPrintedServoAngle = 180;
 
-const int SERVO_MIN_ANGLE = 0;
+const int SERVO_MIN_ANGLE = 120;
 const int SERVO_MAX_ANGLE = 180;
-const unsigned long SERVO_INTERVAL_MS = 50;
+const unsigned long SERVO_INTERVAL_MS = 20;
 unsigned long lastServoUpdate = 0;
 
 // =====================
